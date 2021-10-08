@@ -30,9 +30,8 @@ struct Action {
 
 fn main() -> Result<()> {
   let mut line = String::new();
-  let mut stdin = io::stdin();
   // skip to actions start or no changes
-  while stdin.read_line(&mut line)? > 0 {
+  while io::stdin().read_line(&mut line)? > 0 {
     if line.starts_with("Terraform will perform the following actions:") {
       break;
     }
@@ -46,18 +45,18 @@ fn main() -> Result<()> {
   let mut actions = Vec::new();
 
   // read first action
-  while stdin.read_line(&mut line)? > 0 {
+  while io::stdin().read_line(&mut line)? > 0 {
     if line.starts_with("  # ") {
       break;
     }
     line.clear();
   }
 
-  let mut this_action = read_action_header(&mut stdin, &mut line).context("expect first Action")?;
+  let mut this_action = read_action_header(&mut line).context("expect first Action")?;
 
   loop {
     if line.starts_with("  # ") {
-      this_action = read_action_header(&mut stdin, &mut line).context("expect header for Action")?;
+      this_action = read_action_header(&mut line).context("expect header for Action")?;
     } else if line.starts_with("Plan: ") {
       break;
     } else {
@@ -72,7 +71,7 @@ fn main() -> Result<()> {
 
     line.clear();
 
-    if stdin.read_line(&mut line)? == 0 {
+    if io::stdin().read_line(&mut line)? == 0 {
       break;
     }
   }
@@ -80,7 +79,7 @@ fn main() -> Result<()> {
   Ok(())
 }
 
-fn read_action_header(stdin: &mut io::Stdin, mut line: &mut String) -> Result<Action> {
+fn read_action_header(mut line: &mut String) -> Result<Action> {
   // TODO: handle whitespace in key
   let reference = line
     .split_whitespace()
@@ -89,7 +88,7 @@ fn read_action_header(stdin: &mut io::Stdin, mut line: &mut String) -> Result<Ac
     .to_string();
 
   line.clear();
-  stdin.read_line(&mut line).context("expecting Action detail")?;
+  io::stdin().read_line(&mut line).context("expecting Action detail")?;
 
   let (typ_text, rest) = line.split_at(4);
 
