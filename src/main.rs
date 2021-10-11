@@ -1,6 +1,7 @@
 use anyhow::{bail, Context, Result};
 use cursive::{
-  traits::Nameable,
+  event::Key,
+  traits::{Nameable, Resizable, Scrollable},
   views::{LinearLayout, SelectView, TextView},
 };
 use std::{fmt, io};
@@ -88,8 +89,12 @@ fn main() -> Result<()> {
 
   let mut ui = cursive::default();
   ui.add_global_callback('q', |s| s.quit());
+  ui.add_global_callback(Key::Esc, |s| s.quit());
 
-  let content = TextView::new(actions[0].content.clone()).with_name("content");
+  let content = TextView::new(actions[0].content.clone())
+    .with_name("content")
+    .max_width(120)
+    .scrollable();
 
   let mut select = SelectView::new().on_select(|this_ui, content| {
     this_ui.call_on_name("content", |view: &mut TextView| {
