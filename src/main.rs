@@ -1,5 +1,9 @@
 use anyhow::{bail, Context, Result};
-use std::io;
+use cursive::{
+  traits::Nameable,
+  views::{LinearLayout, SelectView, TextView},
+};
+use std::{fmt, io};
 
 #[derive(Debug, Clone)]
 enum ActionType {
@@ -10,13 +14,19 @@ enum ActionType {
   DuplicateThenRemove,
 }
 
-impl Default for ActionType {
-  fn default() -> Self {
-    Self::Create
+impl fmt::Display for ActionType {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ActionType::Create => write!(f, "  +"),
+      ActionType::Update => write!(f, "  ~"),
+      ActionType::Destroy => write!(f, "  -"),
+      ActionType::DestroyThenCreate => write!(f, "-/+"),
+      ActionType::DuplicateThenRemove => write!(f, "+/-"),
+    }
   }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 struct Action {
   typ: ActionType,
   // example: module.abc.aws_iam_policy.name[key]
@@ -76,6 +86,26 @@ fn main() -> Result<()> {
     }
   }
 
+  let mut ui = cursive::default();
+  ui.add_global_callback('q', |s| s.quit());
+
+  let mut select = SelectView::new().on_select(|this_ui, content| {
+    this_ui.call_on_name("content", |view: &mut TextView| {
+      view.set_content(content);
+    });
+  });
+
+  for act in actions {
+    select.add_item(format!("{} {} {}", act.typ, act.resource, act.name), act.content);
+  }
+
+  let linear_layout = LinearLayout::horizontal()
+    .child(select)
+    .child(TextView::new("").with_name("content"));
+
+  ui.add_layer(linear_layout);
+
+  ui.run();
   Ok(())
 }
 
