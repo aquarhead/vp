@@ -89,6 +89,8 @@ fn main() -> Result<()> {
   let mut ui = cursive::default();
   ui.add_global_callback('q', |s| s.quit());
 
+  let content = TextView::new(actions[0].content.clone()).with_name("content");
+
   let mut select = SelectView::new().on_select(|this_ui, content| {
     this_ui.call_on_name("content", |view: &mut TextView| {
       view.set_content(content);
@@ -99,13 +101,9 @@ fn main() -> Result<()> {
     select.add_item(format!("{} {} {}", act.typ, act.resource, act.name), act.content);
   }
 
-  let linear_layout = LinearLayout::horizontal()
-    .child(select)
-    .child(TextView::new("").with_name("content"));
-
-  ui.add_layer(linear_layout);
-
+  ui.add_layer(LinearLayout::horizontal().child(select).child(content));
   ui.run();
+
   Ok(())
 }
 
@@ -141,6 +139,8 @@ fn read_action_header(mut line: &mut String) -> Result<Action> {
   let mut parts = rest.split("\" \"");
   let resource = parts.next().context("expecting resource")?.to_string();
   let name = parts.next().context("expecting name")?.to_string();
+
+  line.clear();
 
   Ok(Action {
     typ,
